@@ -81,7 +81,7 @@ Animated, separated-dimension, and 3D transforms are left unchanged by automatic
 ### Merge coordinates
 
 - `Comp Space` — build the merged result in composition coordinates.
-- `Common Parent` — retain a common 2D parent when all selected layers share one.
+- `Common Parent` — retain a common 2D parent when all selected layers share one. This is the default mode; Anchor, Position, Scale, Rotation, and Opacity are transferred directly without matrix decomposition.
 - `First Layer` — use the first/top selected Shape Layer as the result coordinate system.
 
 ### Merge animation
@@ -109,7 +109,7 @@ Shapojuy does not display modal confirmations or result dialogs. Operations run 
 
 Developed for Adobe After Effects 2026 using ExtendScript and ScriptUI.
 
-Version documented here: **1.0.2**.
+Version documented here: **1.0.3**.
 
 ## Background
 

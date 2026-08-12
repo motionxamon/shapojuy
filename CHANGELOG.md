@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.3 — 2026-08-12
+
+- Fix incorrect Merge placement for ordinary 2D Shape Layers and layers sharing a Null parent.
+- Transfer Anchor, Position, Scale, Rotation, and Opacity directly when sources share the same parent coordinate system.
+- Make `Common Parent` the default Merge coordinate mode.
+- Keep affine matrix conversion only for mixed parent-coordinate workflows.
+
 ## 1.0.2 — 2026-08-12
 
 - Stop naming merged layers `Shapojuy Merge`.

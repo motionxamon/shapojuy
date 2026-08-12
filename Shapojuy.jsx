@@ -1,14 +1,14 @@
 #target aftereffects
 
 /*
-    Shapojuy 1.0.2
+    Shapojuy 1.0.3
     Shape layer toolbox for After Effects 2026.
     Clean-room rewrite inspired by the workflow of zl_ExplodeShapeLayers.
 */
 
 (function Shapojuy(thisObj) {
     var APP_NAME = "Shapojuy";
-    var VERSION = "1.0.2";
+    var VERSION = "1.0.3";
     var CMD_COPY = 19;
     var CMD_PASTE = 20;
     var STATUS_BUTTON = null;
@@ -528,22 +528,35 @@
         }
     }
 
+    function directTransformAtTime(source, time) {
+        var transform = source.property("ADBE Transform Group");
+        return {
+            anchor: transform.property("ADBE Anchor Point").valueAtTime(time, false),
+            position: transform.property("ADBE Position").valueAtTime(time, false),
+            scale: transform.property("ADBE Scale").valueAtTime(time, false),
+            rotation: transform.property("ADBE Rotate Z").valueAtTime(time, false),
+            skew: 0
+        };
+    }
+
     function applyGroupTransform(group, data, opacity, time, keyed) {
         var transform = group.property("ADBE Vector Transform Group");
+        var anchor = transform.property("ADBE Vector Anchor");
         var position = transform.property("ADBE Vector Position");
         var scale = transform.property("ADBE Vector Scale");
         var rotation = transform.property("ADBE Vector Rotation");
         var skew = transform.property("ADBE Vector Skew");
         var opacityProp = transform.property("ADBE Vector Group Opacity");
-        transform.property("ADBE Vector Anchor").setValue([0, 0]);
         transform.property("ADBE Vector Skew Axis").setValue(0);
         if (keyed) {
+            anchor.setValueAtTime(time, data.anchor || [0, 0]);
             position.setValueAtTime(time, data.position);
             scale.setValueAtTime(time, data.scale);
             rotation.setValueAtTime(time, data.rotation);
             skew.setValueAtTime(time, data.skew);
             opacityProp.setValueAtTime(time, opacity);
         } else {
+            anchor.setValue(data.anchor || [0, 0]);
             position.setValue(data.position);
             scale.setValue(data.scale);
             rotation.setValue(data.rotation);
@@ -608,7 +621,7 @@
 
     function mergeSelected(options) {
         var comp = activeComp();
-        var layers, ordered, first, commonParent, i, target, root, wrapper;
+        var layers, ordered, first, commonParent, allSameParent, directCoordinates, i, target, root, wrapper;
         var times, t, data, opacity, topLayer;
         if (!comp) throw new Error("Open a composition.");
         layers = shapeLayersFromSelection(comp);
@@ -625,9 +638,13 @@
         ordered.sort(function (a, b) { return a.index - b.index; });
         first = ordered[0];
         commonParent = first.parent;
+        allSameParent = true;
         for (i = 1; i < ordered.length; i++) {
-            if (ordered[i].parent !== commonParent) commonParent = null;
+            if (ordered[i].parent !== commonParent) allSameParent = false;
         }
+        if (!allSameParent) commonParent = null;
+        directCoordinates = allSameParent &&
+            (options.mergeMode === "Common Parent" || commonParent === null);
         topLayer = ordered[0];
         target = comp.layers.addShape();
         target.name = uniqueLayerName(
@@ -664,7 +681,9 @@
                 }
                 times.sort(function (a, b) { return a - b; });
                 for (t = 0; t < times.length; t++) {
-                    data = relativeTransformAtTime(ordered[i], target, times[t]);
+                    data = directCoordinates ?
+                        directTransformAtTime(ordered[i], times[t]) :
+                        relativeTransformAtTime(ordered[i], target, times[t]);
                     opacity = ordered[i].property("ADBE Transform Group")
                         .property("ADBE Opacity").valueAtTime(times[t], false);
                     applyGroupTransform(wrapper, data, opacity, times[t], options.animationMode !== "Off" && times.length > 1);
@@ -701,7 +720,7 @@
             outputSuffix: "",
             sourceAction: "Disable",
             anchorMode: "Keep",
-            mergeMode: "Comp Space"
+            mergeMode: "Common Parent"
         };
         var toolbar, optionsPanel, line, sourceDrop, anchorDrop, mergeDrop, animationDrop, suffixInput;
 
@@ -754,7 +773,7 @@
         line = optionsPanel.add("group");
         line.add("statictext", undefined, "Merge coordinates:");
         mergeDrop = line.add("dropdownlist", undefined, ["Comp Space", "Common Parent", "First Layer"]);
-        mergeDrop.selection = 0;
+        mergeDrop.selection = 1;
 
         line = optionsPanel.add("group");
         line.add("statictext", undefined, "Merge animation:");

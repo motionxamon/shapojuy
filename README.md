@@ -28,7 +28,7 @@ Download the ready-to-install `Shapojuy.jsx` from the [latest GitHub Release](ht
 | `C` | Clean |
 | `⚙` | Settings / Настройки |
 
-Current release: **1.0.2**
+Current release: **1.0.3**
 
 ---
 
@@ -101,7 +101,7 @@ C:\Program Files\Adobe\Adobe After Effects 2026\Support Files\Scripts\ScriptUI P
 ### Merge coordinates
 
 - `Comp Space` — координаты композиции; универсальный режим.
-- `Common Parent` — сохранить общего двумерного родителя.
+- `Common Parent` — сохранить общего двумерного родителя. Это режим по умолчанию и наиболее надёжный вариант для обычных слоёв и слоёв под одним Null.
 - `First Layer` — использовать первый/верхний Shape Layer как систему координат.
 
 ### Merge animation
@@ -197,7 +197,7 @@ Shows or hides all options. Operations run immediately without modal confirmatio
 ### Merge coordinates
 
 - `Comp Space` — use composition coordinates.
-- `Common Parent` — preserve a shared 2D parent.
+- `Common Parent` — preserve a shared 2D parent. This is the default and most reliable mode for ordinary layers and layers under one Null.
 - `First Layer` — use the first/top Shape Layer as the coordinate system.
 
 ### Merge animation
