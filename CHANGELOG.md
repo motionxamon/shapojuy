@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.2 — 2026-08-12
+
+- Stop naming merged layers `Shapojuy Merge`.
+- Build merged-layer names from the selected source Shape Layer names.
+- Preserve original internal group names during Merge.
+- Add an optional `Output suffix` field for newly created Shape Layer names.
+- Keep the suffix empty by default so Explode uses group names and Merge uses source-layer names.
+
 ## 1.0.0 — 2026-08-12
 
 - Initial public release.

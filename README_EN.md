@@ -92,6 +92,10 @@ Animated, separated-dimension, and 3D transforms are left unchanged by automatic
 
 `Every Frame` creates substantially more keyframes.
 
+### Output suffix
+
+Optional suffix for newly created Shape Layers. Leave it empty to use source group names for Explode and merged source-layer names for Merge. Shapojuy does not insert its own name into output layers. `_v2` is appended directly; plain text such as `outline` is separated with a space.
+
 ## Current limitations
 
 - Merge supports 2D Shape Layers and 2D parent chains. 3D layers and 3D parents are rejected.
@@ -105,7 +109,7 @@ Shapojuy does not display modal confirmations or result dialogs. Operations run 
 
 Developed for Adobe After Effects 2026 using ExtendScript and ScriptUI.
 
-Version documented here: **1.0.0**.
+Version documented here: **1.0.2**.
 
 ## Background
 

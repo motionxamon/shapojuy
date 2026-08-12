@@ -28,7 +28,7 @@ Download the ready-to-install `Shapojuy.jsx` from the [latest GitHub Release](ht
 | `C` | Clean |
 | `⚙` | Settings / Настройки |
 
-Current release: **1.0.0**
+Current release: **1.0.2**
 
 ---
 
@@ -73,7 +73,7 @@ C:\Program Files\Adobe\Adobe After Effects 2026\Support Files\Scripts\ScriptUI P
 
 ### `M` — Merge
 
-Выделите минимум два Shape Layer и нажмите `M`. Содержимое будет объединено в один Shape Layer с отдельной внутренней группой для каждого исходника. Для Position, Scale, Rotation, Skew и Opacity рассчитывается трансформация относительно итогового слоя, включая двумерные parent-цепочки и Null-объекты.
+Выделите минимум два Shape Layer и нажмите `M`. Содержимое будет объединено в один Shape Layer с отдельной внутренней группой для каждого исходника. Для Position, Scale, Rotation, Skew и Opacity рассчитывается трансформация относительно итогового слоя, включая двумерные parent-цепочки и Null-объекты. Имя итогового слоя собирается из имён объединённых Shape Layers; слово `Shapojuy` в имя не добавляется.
 
 ### `C` — Clean
 
@@ -112,6 +112,7 @@ C:\Program Files\Adobe\Adobe After Effects 2026\Support Files\Scripts\ScriptUI P
 
 ### Дополнительные флаги
 
+- `Output suffix` — необязательный суффикс для новых Shape Layers. Пустое поле оставляет исходные имена групп и объединяемых слоёв. Для `_v2` получится `Group_v2`, для `outline` — `Group outline`.
 - `Explode selected top-level groups only` — обрабатывать только выделенные группы верхнего уровня.
 - `Keep control Paths without Fill/Stroke` — сохранять невидимые управляющие Paths.
 - `Normalize names and avoid duplicates` — исправлять стандартные имена и не допускать совпадений.
@@ -168,7 +169,7 @@ Select one or more Shape Layers and click `X`. Each top-level geometry group bec
 
 ### `M` — Merge
 
-Select at least two Shape Layers and click `M`. Their contents are combined into one Shape Layer with a separate internal group for every source. Position, Scale, Rotation, Skew, and Opacity are calculated relative to the result, including supported 2D Null-parent chains.
+Select at least two Shape Layers and click `M`. Their contents are combined into one Shape Layer with a separate internal group for every source. Position, Scale, Rotation, Skew, and Opacity are calculated relative to the result, including supported 2D Null-parent chains. The output layer name is built from the merged Shape Layer names; `Shapojuy` is never inserted into the layer name.
 
 ### `C` — Clean
 
@@ -207,6 +208,7 @@ Shows or hides all options. Operations run immediately without modal confirmatio
 
 ### Additional options
 
+- `Output suffix` — optional suffix for newly created Shape Layers. Leave it empty to keep source group/layer names. `_v2` produces `Group_v2`; `outline` produces `Group outline`.
 - `Explode selected top-level groups only` — process selected top-level groups only.
 - `Keep control Paths without Fill/Stroke` — retain invisible control paths.
 - `Normalize names and avoid duplicates` — clean generic names and avoid collisions.

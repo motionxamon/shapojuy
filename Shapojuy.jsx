@@ -1,14 +1,14 @@
 #target aftereffects
 
 /*
-    Shapojuy 1.0.0
+    Shapojuy 1.0.2
     Shape layer toolbox for After Effects 2026.
     Clean-room rewrite inspired by the workflow of zl_ExplodeShapeLayers.
 */
 
 (function Shapojuy(thisObj) {
     var APP_NAME = "Shapojuy";
-    var VERSION = "1.0.0";
+    var VERSION = "1.0.2";
     var CMD_COPY = 19;
     var CMD_PASTE = 20;
     var STATUS_BUTTON = null;
@@ -128,6 +128,26 @@
         }
     }
 
+    function outputSuffix(value) {
+        var suffix = value || "";
+        suffix = suffix.replace(/^\s+|\s+$/g, "");
+        if (suffix === "") return "";
+        if (/^[._-]/.test(suffix)) return suffix;
+        return " " + suffix;
+    }
+
+    function mergedLayerName(layers, normalizeNames, suffix) {
+        var names = [];
+        var i, name;
+        for (i = 0; i < layers.length; i++) {
+            name = normalizeNames ? cleanName(layers[i].name, "Shape", i + 1) : layers[i].name;
+            names.push(name);
+        }
+        name = names.join(" + ");
+        if (name.length > 180) name = name.substring(0, 177) + "...";
+        return name + outputSuffix(suffix);
+    }
+
     function applySourceAction(layers, action) {
         var i;
         if (action === "Keep") return;
@@ -221,6 +241,7 @@
             baseName = options.normalizeNames ?
                 cleanName(candidates[i].name, cleanName(layer.name, "Shape", i + 1), i + 1) :
                 layer.name + " - " + candidates[i].name;
+            baseName += outputSuffix(options.outputSuffix);
             duplicate.name = uniqueLayerName(comp, baseName, duplicate);
             centerAnchor(duplicate, options.anchorMode);
             created.push(duplicate);
@@ -609,7 +630,11 @@
         }
         topLayer = ordered[0];
         target = comp.layers.addShape();
-        target.name = uniqueLayerName(comp, options.normalizeNames ? "Shapojuy Merge" : "Merged Shape Layer", target);
+        target.name = uniqueLayerName(
+            comp,
+            mergedLayerName(ordered, options.normalizeNames, options.outputSuffix),
+            target
+        );
         target.moveBefore(topLayer);
         configureMergeTarget(target, first, commonParent, options.mergeMode);
         copyLayerAppearance(first, target);
@@ -673,11 +698,12 @@
             keepControlPaths: true,
             normalizeNames: true,
             animationMode: "Key Times",
+            outputSuffix: "",
             sourceAction: "Disable",
             anchorMode: "Keep",
             mergeMode: "Comp Space"
         };
-        var toolbar, optionsPanel, line, sourceDrop, anchorDrop, mergeDrop, animationDrop;
+        var toolbar, optionsPanel, line, sourceDrop, anchorDrop, mergeDrop, animationDrop, suffixInput;
 
         win.orientation = "column";
         win.alignChildren = ["left", "top"];
@@ -735,6 +761,12 @@
         animationDrop = line.add("dropdownlist", undefined, ["Off", "Key Times", "Every Frame"]);
         animationDrop.selection = 1;
 
+        line = optionsPanel.add("group");
+        line.add("statictext", undefined, "Output suffix:");
+        suffixInput = line.add("edittext", undefined, "");
+        suffixInput.characters = 20;
+        suffixInput.helpTip = "Optional suffix for newly created Shape Layer names, for example _v2 or outline";
+
         var selectedOnly = optionsPanel.add("checkbox", undefined, "Explode selected top-level groups only");
         var keepPaths = optionsPanel.add("checkbox", undefined, "Keep control Paths without Fill/Stroke");
         keepPaths.value = true;
@@ -746,6 +778,7 @@
             settings.anchorMode = anchorDrop.selection.text;
             settings.mergeMode = mergeDrop.selection.text;
             settings.animationMode = animationDrop.selection.text;
+            settings.outputSuffix = suffixInput.text;
             settings.selectedGroupsOnly = selectedOnly.value;
             settings.keepControlPaths = keepPaths.value;
             settings.normalizeNames = normalizeNames.value;
