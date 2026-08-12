@@ -9,4 +9,5 @@
 - Merge with Comp Space, Common Parent, and First Layer coordinate modes.
 - Key-time and every-frame transform-animation sampling.
 - Clean operation, source handling, anchor options, and name normalization.
+- Immediate one-click operation without modal alerts or confirmation dialogs.
 - Russian and English documentation.

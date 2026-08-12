@@ -11,6 +11,7 @@
     var VERSION = "1.0.0";
     var CMD_COPY = 19;
     var CMD_PASTE = 20;
+    var STATUS_BUTTON = null;
 
     var GEOMETRY = {
         "ADBE Vector Shape - Group": true,
@@ -24,6 +25,14 @@
         "ADBE Vector Graphic - Stroke": true,
         "ADBE Vector Graphic - G-Stroke": true
     };
+
+    function setStatus(message, isError) {
+        var prefix = isError ? "ERROR: " : "";
+        try { $.writeln(APP_NAME + " — " + prefix + message); } catch (ignore) {}
+        if (STATUS_BUTTON !== null) {
+            STATUS_BUTTON.helpTip = "Show/hide Shapojuy settings\n\nLast status: " + prefix + message;
+        }
+    }
 
     function activeComp() {
         var item = app.project ? app.project.activeItem : null;
@@ -230,24 +239,17 @@
         if (!comp) throw new Error("Open a composition.");
         layers = shapeLayersFromSelection(comp);
         if (layers.length === 0) throw new Error("Select one or more Shape Layers.");
-        if (options.confirm && !confirm(
-            "Explode " + layers.length + " Shape Layer(s)?\nSource action: " + options.sourceAction,
-            true,
-            APP_NAME
-        )) return null;
-
         for (i = 0; i < layers.length; i++) {
             result = explodeOne(layers[i], options, stats);
             created = created.concat(result);
         }
         deselectAll(comp);
         for (i = 0; i < created.length; i++) created[i].selected = true;
-        if (showReport !== false) alert(
+        if (showReport !== false) setStatus(
             "Exploded layers: " + stats.inputLayers +
             "\nCreated Shape Layers: " + stats.created +
             "\nEmpty items removed: " + stats.emptyRemoved +
-            "\nSkipped layers: " + stats.skippedLayers,
-            APP_NAME
+            "\nSkipped layers: " + stats.skippedLayers
         );
         return {layers: created, stats: stats};
     }
@@ -290,12 +292,6 @@
         if (!comp) throw new Error("Open a composition.");
         layers = shapeLayersFromSelection(comp);
         if (layers.length === 0) throw new Error("Select one or more Shape Layers.");
-        if (options.confirm && !confirm(
-            "Clean " + layers.length + " Shape Layer(s)?\nThis removes empty nested groups.",
-            true,
-            APP_NAME
-        )) return;
-
         for (i = 0; i < layers.length; i++) {
             stats.layers++;
             removeEmptyGroups(
@@ -322,12 +318,11 @@
                 }
             }
         }
-        alert(
+        setStatus(
             "Checked Shape Layers: " + stats.layers +
             "\nEmpty groups removed: " + stats.groups +
             "\nEmpty layers found: " + stats.emptyLayers +
-            "\nLayers/groups renamed: " + stats.renamed,
-            APP_NAME
+            "\nLayers/groups renamed: " + stats.renamed
         );
     }
 
@@ -391,11 +386,10 @@
         }
         deselectAll(comp);
         for (i = 0; i < created.length; i++) created[i].selected = true;
-        if (showReport !== false) alert(
+        if (showReport !== false) setStatus(
             "Converted: " + created.length +
             "\nSkipped: " + skipped +
-            "\nFailed: " + failed,
-            APP_NAME
+            "\nFailed: " + failed
         );
         return {layers: created, sources: convertedSources, skipped: skipped, failed: failed};
     }
@@ -405,14 +399,12 @@
         var originalAction = options.sourceAction;
         var converted;
         if (!comp) throw new Error("Open a composition.");
-        if (options.confirm && !confirm("Convert selected vectors and explode the results?", true, APP_NAME)) return;
         converted = convertSelectedVectors(false, originalAction);
         if (converted.layers.length === 0) throw new Error("No vector layers were converted.");
         deselectAll(comp);
         var selectedIndex;
         for (selectedIndex = 0; selectedIndex < converted.layers.length; selectedIndex++)
             converted.layers[selectedIndex].selected = true;
-        options.confirm = false;
         explodeSelected(options, true);
     }
 
@@ -593,32 +585,6 @@
         targetTransform.property("ADBE Opacity").setValue(100);
     }
 
-    function mergeWarnings(layers) {
-        var effects = 0;
-        var masks = 0;
-        var mattes = 0;
-        var styles = 0;
-        var i, group;
-        for (i = 0; i < layers.length; i++) {
-            group = layers[i].property("ADBE Effect Parade");
-            if (group && group.numProperties > 0) effects++;
-            group = layers[i].property("ADBE Mask Parade");
-            if (group && group.numProperties > 0) masks++;
-            group = layers[i].property("ADBE Layer Styles");
-            if (group && group.numProperties > 0) styles++;
-            try {
-                if (layers[i].trackMatteType !== TrackMatteType.NO_TRACK_MATTE) mattes++;
-            } catch (ignore) {}
-        }
-        var message = "";
-        if (effects > 0) message += "\nWarning: " + effects + " layer(s) have Effects.";
-        if (masks > 0) message += "\nWarning: " + masks + " layer(s) have Masks.";
-        if (styles > 0) message += "\nWarning: " + styles + " layer(s) have Layer Styles.";
-        if (mattes > 0) message += "\nWarning: " + mattes + " layer(s) use Track Matte.";
-        if (message !== "") message += "\nThese cannot be preserved per internal Shape Group.";
-        return message;
-    }
-
     function mergeSelected(options) {
         var comp = activeComp();
         var layers, ordered, first, commonParent, i, target, root, wrapper;
@@ -634,14 +600,6 @@
                 ancestor = ancestor.parent;
             }
         }
-        if (options.confirm && !confirm(
-            "Merge " + layers.length + " Shape Layers?\nCoordinates: " + options.mergeMode +
-            "\nAnimation: " + options.animationMode +
-            "\nSource action: " + options.sourceAction + mergeWarnings(layers),
-            true,
-            APP_NAME
-        )) return;
-
         ordered = layers.slice(0);
         ordered.sort(function (a, b) { return a.index - b.index; });
         first = ordered[0];
@@ -694,18 +652,17 @@
         applySourceAction(layers, options.sourceAction);
         deselectAll(comp);
         target.selected = true;
-        alert(
+        setStatus(
             "Merged Shape Layers: " + layers.length +
             "\nGroups created: " + ordered.length +
-            (options.animationMode !== "Off" ? "\nAnimation sampling: " + options.animationMode : ""),
-            APP_NAME
+            (options.animationMode !== "Off" ? "\nAnimation sampling: " + options.animationMode : "")
         );
     }
 
     function withUndo(label, callback) {
         app.beginUndoGroup(APP_NAME + " - " + label);
         try { callback(); }
-        catch (error) { alert(label + " failed:\n" + error.toString(), APP_NAME); }
+        catch (error) { setStatus(label + " failed: " + error.toString(), true); }
         finally { app.endUndoGroup(); }
     }
 
@@ -716,7 +673,6 @@
             keepControlPaths: true,
             normalizeNames: true,
             animationMode: "Key Times",
-            confirm: true,
             sourceAction: "Disable",
             anchorMode: "Keep",
             mergeMode: "Comp Space"
@@ -739,6 +695,7 @@
         var mergeButton = toolbar.add("button", undefined, "M");
         var cleanButton = toolbar.add("button", undefined, "C");
         var optionsButton = toolbar.add("button", undefined, "\u2699");
+        STATUS_BUTTON = optionsButton;
 
         convertButton.preferredSize = [42, 24];
         vectorExplodeButton.preferredSize = [42, 24];
@@ -783,8 +740,6 @@
         keepPaths.value = true;
         var normalizeNames = optionsPanel.add("checkbox", undefined, "Normalize names and avoid duplicates");
         normalizeNames.value = true;
-        var confirmBox = optionsPanel.add("checkbox", undefined, "Show confirmation before destructive operations");
-        confirmBox.value = true;
 
         function syncSettings() {
             settings.sourceAction = sourceDrop.selection.text;
@@ -794,7 +749,6 @@
             settings.selectedGroupsOnly = selectedOnly.value;
             settings.keepControlPaths = keepPaths.value;
             settings.normalizeNames = normalizeNames.value;
-            settings.confirm = confirmBox.value;
             return settings;
         }
 

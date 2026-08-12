@@ -95,9 +95,11 @@ Animated, separated-dimension, and 3D transforms are left unchanged by automatic
 ## Current limitations
 
 - Merge supports 2D Shape Layers and 2D parent chains. 3D layers and 3D parents are rejected.
-- Effects, Masks, Layer Styles, and Track Mattes cannot be preserved independently inside separate Shape Groups. Shapojuy warns before merging affected layers when confirmation is enabled.
+- Effects, Masks, Layer Styles, and Track Mattes cannot be preserved independently inside separate Shape Groups.
 - Key Times sampling can differ between original keys when several animated transforms are combined. Use Every Frame when exact intermediate motion matters.
 - After Effects' native vector conversion limitations still apply to gradients and unsupported Illustrator features.
+
+Shapojuy does not display modal confirmations or result dialogs. Operations run immediately; the last status is available in the `⚙` button tooltip and the ExtendScript Console.
 
 ## Compatibility
 
