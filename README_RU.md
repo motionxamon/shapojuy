@@ -163,7 +163,7 @@ Shapojuy не показывает модальные подтверждения
 
 ## Совместимость
 
-Версия 1.0.3 разработана для Adobe After Effects 2026 на ExtendScript и ScriptUI.
+Версия 1.0.5 разработана для Adobe After Effects 2026 на ExtendScript и ScriptUI.
 
 ## История проекта
 

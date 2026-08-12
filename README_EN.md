@@ -109,7 +109,7 @@ Shapojuy does not display modal confirmations or result dialogs. Operations run 
 
 Developed for Adobe After Effects 2026 using ExtendScript and ScriptUI.
 
-Version documented here: **1.0.3**.
+Version documented here: **1.0.5**.
 
 ## Background
 

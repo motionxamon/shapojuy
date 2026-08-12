@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.5 — 2026-08-12
+
+- Restore reliable clipboard-based transfer of complete Shape Layer Contents during Merge.
+- Reacquire pasted vector groups by property index before applying transforms, avoiding invalid After Effects property references.
+- Preserve visual placement through full parent and Null coordinate chains.
+- Set source handling to `Delete` and anchor handling to `Visual Center` by default.
+- Add optional debug alerts and show the loaded script version in settings.
+- Keep source/group-based naming and the optional output suffix.
+
 ## 1.0.3 — 2026-08-12
 
 - Fix incorrect Merge placement for ordinary 2D Shape Layers and layers sharing a Null parent.

@@ -28,7 +28,7 @@ Download the ready-to-install `Shapojuy.jsx` from the [latest GitHub Release](ht
 | `C` | Clean |
 | `⚙` | Settings / Настройки |
 
-Current release: **1.0.3**
+Current release: **1.0.5**
 
 ---
 

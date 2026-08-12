@@ -1,17 +1,18 @@
 #target aftereffects
 
 /*
-    Shapojuy 1.0.3
+    Shapojuy 1.0.5
     Shape layer toolbox for After Effects 2026.
     Clean-room rewrite inspired by the workflow of zl_ExplodeShapeLayers.
 */
 
 (function Shapojuy(thisObj) {
     var APP_NAME = "Shapojuy";
-    var VERSION = "1.0.3";
+    var VERSION = "1.0.5";
     var CMD_COPY = 19;
     var CMD_PASTE = 20;
     var STATUS_BUTTON = null;
+    var DEBUG_ALERTS = false;
 
     var GEOMETRY = {
         "ADBE Vector Shape - Group": true,
@@ -32,6 +33,7 @@
         if (STATUS_BUTTON !== null) {
             STATUS_BUTTON.helpTip = "Show/hide Shapojuy settings\n\nLast status: " + prefix + message;
         }
+        if (DEBUG_ALERTS) alert("[" + VERSION + "] " + prefix + message, APP_NAME + " Debug");
     }
 
     function activeComp() {
@@ -568,22 +570,38 @@
     function copyContents(source, target, wrapper) {
         var comp = source.containingComp;
         var root = source.property("ADBE Root Vectors Group");
-        var destination = wrapper.property("ADBE Vectors Group");
+        var wrapperIndex = wrapper.propertyIndex;
         var locked = source.locked;
+        var destination;
+        var refreshed;
         var i;
-        if (root.numProperties === 0) return;
+        if (root.numProperties === 0)
+            throw new Error("Shape Layer has no Contents: " + source.name);
         try {
             source.locked = false;
             deselectAll(comp);
             source.selected = true;
             for (i = 1; i <= root.numProperties; i++) root.property(i).selected = true;
             app.executeCommand(CMD_COPY);
+            for (i = 1; i <= root.numProperties; i++) root.property(i).selected = false;
             source.selected = false;
+
             target.selected = true;
+            refreshed = target.property("ADBE Root Vectors Group").property(wrapperIndex);
+            destination = refreshed.property("ADBE Vectors Group");
             destination.selected = true;
             app.executeCommand(CMD_PASTE);
+
+            // Paste invalidates Property references in indexed groups. Always
+            // reacquire the wrapper before checking or transforming it.
+            refreshed = target.property("ADBE Root Vectors Group").property(wrapperIndex);
+            if (!hasGeometry(refreshed))
+                throw new Error("No geometry was pasted from: " + source.name);
+            return refreshed;
         } finally {
-            target.selected = false;
+            try { destination.selected = false; } catch (ignore1) {}
+            try { target.selected = false; } catch (ignore2) {}
+            try { source.selected = false; } catch (ignore3) {}
             source.locked = locked;
         }
     }
@@ -621,7 +639,7 @@
 
     function mergeSelected(options) {
         var comp = activeComp();
-        var layers, ordered, first, commonParent, allSameParent, directCoordinates, i, target, root, wrapper;
+        var layers, ordered, first, commonParent, i, target, root, wrapper;
         var times, t, data, opacity, topLayer;
         if (!comp) throw new Error("Open a composition.");
         layers = shapeLayersFromSelection(comp);
@@ -638,13 +656,9 @@
         ordered.sort(function (a, b) { return a.index - b.index; });
         first = ordered[0];
         commonParent = first.parent;
-        allSameParent = true;
         for (i = 1; i < ordered.length; i++) {
-            if (ordered[i].parent !== commonParent) allSameParent = false;
+            if (ordered[i].parent !== commonParent) commonParent = null;
         }
-        if (!allSameParent) commonParent = null;
-        directCoordinates = allSameParent &&
-            (options.mergeMode === "Common Parent" || commonParent === null);
         topLayer = ordered[0];
         target = comp.layers.addShape();
         target.name = uniqueLayerName(
@@ -667,7 +681,7 @@
             for (i = 0; i < ordered.length; i++) {
                 wrapper = root.addProperty("ADBE Vector Group");
                 wrapper.name = options.normalizeNames ? cleanName(ordered[i].name, "Shape", i + 1) : ordered[i].name;
-                copyContents(ordered[i], target, wrapper);
+                wrapper = copyContents(ordered[i], target, wrapper);
                 times = [comp.time];
                 if (options.animationMode === "Key Times") collectTransformTimes(ordered[i], times);
                 else if (options.animationMode === "Every Frame") {
@@ -681,9 +695,7 @@
                 }
                 times.sort(function (a, b) { return a - b; });
                 for (t = 0; t < times.length; t++) {
-                    data = directCoordinates ?
-                        directTransformAtTime(ordered[i], times[t]) :
-                        relativeTransformAtTime(ordered[i], target, times[t]);
+                    data = relativeTransformAtTime(ordered[i], target, times[t]);
                     opacity = ordered[i].property("ADBE Transform Group")
                         .property("ADBE Opacity").valueAtTime(times[t], false);
                     applyGroupTransform(wrapper, data, opacity, times[t], options.animationMode !== "Off" && times.length > 1);
@@ -693,6 +705,7 @@
             target.remove();
             throw error;
         }
+        centerAnchor(target, options.anchorMode);
         applySourceAction(layers, options.sourceAction);
         deselectAll(comp);
         target.selected = true;
@@ -718,8 +731,9 @@
             normalizeNames: true,
             animationMode: "Key Times",
             outputSuffix: "",
-            sourceAction: "Disable",
-            anchorMode: "Keep",
+            debugAlerts: false,
+            sourceAction: "Delete",
+            anchorMode: "Visual Center",
             mergeMode: "Common Parent"
         };
         var toolbar, optionsPanel, line, sourceDrop, anchorDrop, mergeDrop, animationDrop, suffixInput;
@@ -765,10 +779,10 @@
         line = optionsPanel.add("group");
         line.add("statictext", undefined, "Source:");
         sourceDrop = line.add("dropdownlist", undefined, ["Keep", "Disable", "Archive", "Delete"]);
-        sourceDrop.selection = 1;
+        sourceDrop.selection = 3;
         line.add("statictext", undefined, "Anchor:");
         anchorDrop = line.add("dropdownlist", undefined, ["Keep", "Visual Center", "Comp"]);
-        anchorDrop.selection = 0;
+        anchorDrop.selection = 1;
 
         line = optionsPanel.add("group");
         line.add("statictext", undefined, "Merge coordinates:");
@@ -791,6 +805,12 @@
         keepPaths.value = true;
         var normalizeNames = optionsPanel.add("checkbox", undefined, "Normalize names and avoid duplicates");
         normalizeNames.value = true;
+        var debugAlerts = optionsPanel.add("checkbox", undefined, "Debug alerts");
+        debugAlerts.value = false;
+        debugAlerts.helpTip = "Show operation reports and exact error messages in modal alerts";
+
+        var versionLabel = optionsPanel.add("statictext", undefined, "Version: " + VERSION);
+        versionLabel.helpTip = "Currently loaded Shapojuy build";
 
         function syncSettings() {
             settings.sourceAction = sourceDrop.selection.text;
@@ -801,6 +821,8 @@
             settings.selectedGroupsOnly = selectedOnly.value;
             settings.keepControlPaths = keepPaths.value;
             settings.normalizeNames = normalizeNames.value;
+            settings.debugAlerts = debugAlerts.value;
+            DEBUG_ALERTS = settings.debugAlerts;
             return settings;
         }
 
